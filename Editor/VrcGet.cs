@@ -76,7 +76,7 @@ namespace Anatawa12.VrcGetResolver
 
         public static void Resolve()
         {
-            var process = Process.Start($"{LocalVrcGetPath} resolve --project .");
+            var process = Process.Start(LocalVrcGetPath, $"resolve --project .");
             if (process == null) throw new Exception("cannot start vrc-get");
             process.WaitForExit();
         }
