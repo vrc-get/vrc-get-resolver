@@ -1,0 +1,14 @@
+{
+  "name": "com.anatawa12.vrc-get-resolver",
+  "version": "1.0.0",
+  "displayName": "vrc-get resolver",
+  "author": {
+    "name": "anatawa12",
+    "url": "https://anatawa12.com/"
+  },
+  "description": "vrc-get resolver: A Open Source Alternative of VPM Resolver",
+  "license": "MIT",
+  "url": "https://github.com/anatawa12/vrc-get-resolver",
+  "repo": "https://vpm.anatawa12.com/vpm.json",
+  "samples": []
+}
