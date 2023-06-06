@@ -1,9 +1,13 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
+using JetBrains.Annotations;
 using Mono.Unix;
+using UnityEngine;
 
 namespace Anatawa12.VrcGetResolver
 {
@@ -46,7 +50,7 @@ namespace Anatawa12.VrcGetResolver
 
         public static bool IsInstalled() => LocalVrcGetPath != null && File.Exists(LocalVrcGetPath);
 
-        public static void InstallIfNeeded()
+        public static async Task InstallIfNeeded()
         {
             if (!IsSupported) throw new Exception("VrcGet is not supported for this platform");
             if (IsInstalled()) return;
@@ -55,12 +59,11 @@ namespace Anatawa12.VrcGetResolver
             {
                 httpClient.DefaultRequestHeaders.Add("User-Agent",
                     "vrc-get-resolver (github.com/anatawa12/vrc-get-resolver)");
-                using (var name = httpClient
-                           .GetAsync($"https://github.com/anatawa12/vrc-get/releases/latest/download/{ExecutableName}")
-                           .Result)
+                using (var name = await httpClient
+                           .GetAsync($"https://github.com/anatawa12/vrc-get/releases/latest/download/{ExecutableName}"))
                 using (var file = File.OpenWrite(LocalVrcGetPath))
                 {
-                    name.Content.CopyToAsync(file).Wait();
+                    await name.Content.CopyToAsync(file);
                 }
             }
 
@@ -74,11 +77,11 @@ namespace Anatawa12.VrcGetResolver
         private const FileAccessPermissions Executable =
             FileAccessPermissions.OtherExecute | FileAccessPermissions.GroupExecute | FileAccessPermissions.UserExecute;
 
-        public static void Resolve()
+        public static async Task Resolve()
         {
             var process = Process.Start(LocalVrcGetPath, $"resolve --project .");
             if (process == null) throw new Exception("cannot start vrc-get");
-            process.WaitForExit();
+            await Task.Run(() => process.WaitForExit());
         }
     }
 }

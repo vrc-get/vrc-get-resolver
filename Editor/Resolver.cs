@@ -71,13 +71,31 @@ namespace Anatawa12.VrcGetResolver
             switch (result)
             {
                 case 0:
-                    VrcGet.InstallIfNeeded();
-                    VrcGet.Resolve();
+                    InstallAndResolve();
                     break;
                 case 1:
                     break;
                 case 2:
                     throw new NotImplementedException();
+            }
+        }
+
+        private static async void InstallAndResolve()
+        {
+            try
+            {
+                EditorUtility.DisplayProgressBar("Resolve Project", "Installing vrc-get", 0.0f);
+                await VrcGet.InstallIfNeeded();
+                EditorUtility.DisplayProgressBar("Resolve Project", "Resolving package", 0.5f);
+                await VrcGet.Resolve();
+                EditorUtility.ClearProgressBar();
+            }
+            catch
+            {
+                EditorUtility.ClearProgressBar();
+                EditorUtility.DisplayDialog("vrc-get resolver",
+                    "Exception resolving package! See Console for more details!",
+                    "OK");
             }
         }
 
