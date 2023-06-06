@@ -44,6 +44,7 @@ namespace Anatawa12.VrcGetResolver
 
             public static readonly GUIContent[] LoadingContentList = { new GUIContent("Loading...") };
             public static readonly GUIContent[] LoadingErrorContentList = { new GUIContent("Error") };
+            public static readonly GUIContent[] MissingContentList = { new GUIContent("Missing") };
         }
 
         private Task<VrcGet.InfoProject> _projectTask;
@@ -83,6 +84,10 @@ namespace Anatawa12.VrcGetResolver
                     else if (infoTask.Exception != null || infoTask.Result == null)
                     {
                         EditorGUILayout.Popup(0, Styles.LoadingErrorContentList, Styles.RedLabelLabel, GUILayout.Width(50));
+                    }
+                    else if (infoTask.Result.versions.Count == 0)
+                    {
+                        EditorGUILayout.Popup(0, Styles.MissingContentList, Styles.RedLabelLabel, GUILayout.Width(50));
                     }
                     else
                     {
