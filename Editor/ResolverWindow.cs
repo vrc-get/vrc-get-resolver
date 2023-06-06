@@ -64,7 +64,11 @@ namespace Anatawa12.VrcGetResolver
 
             Debug.Assert(_projectTask != null, nameof(_projectTask) + " != null");
 
-            if (_projectTask.IsFaulted)
+            if (_resolve != null)
+            {
+                GUILayout.Label("Resolving packages...");
+            }
+            else if (_projectTask.IsFaulted)
             {
                 GUILayout.Label("Error getting Information", Styles.RedLabelLabel);
             }
@@ -172,6 +176,21 @@ namespace Anatawa12.VrcGetResolver
                 GUI.Label(headerInstalledRect, "Installed");
 
                 GUILayout.EndScrollView();
+
+                if (GUILayout.Button("Resolve ALL"))
+                {
+                    async Task ResolveAll()
+                    {
+                        await VrcGet.Resolve();
+                        MethodInfo method = typeof(UnityEditor.PackageManager.Client).GetMethod("Resolve",
+                            BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.DeclaredOnly);
+                        if (method != null)
+                            method.Invoke(null, null);
+                        _resolve = null;
+                    }
+                    _resolve = ResolveAll();
+                }
+                GUILayout.FlexibleSpace();
             }
             else
             {
@@ -180,6 +199,8 @@ namespace Anatawa12.VrcGetResolver
         }
 
         private static Color _defaultBackgroundColor;
+        private Task _resolve;
+
         public static Color DefaultBackgroundColor
         {
             get
