@@ -19,6 +19,9 @@ namespace Anatawa12.VrcGetResolver
 
         private static bool ResolveNeeded()
         {
+            if (SessionState.GetBool("com.anatawa12.vrc-get-resolver.resolved", false))
+                return false;
+            SessionState.SetBool("com.anatawa12.vrc-get-resolver.resolved", true);
             string vpmManifestJson;
             try
             {
