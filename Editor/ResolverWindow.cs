@@ -45,6 +45,9 @@ namespace Anatawa12.VrcGetResolver
 
         private void OnGUI()
         {
+            if (GUILayout.Button("Refresh"))
+                Refresh();
+
             if (_projectTask == null)
             {
                 Refresh();
@@ -76,9 +79,6 @@ namespace Anatawa12.VrcGetResolver
             {
                 GUILayout.Label("Fetching Package information...");
             }
- 
-            if (GUILayout.Button("Refresh"))
-                Refresh();
         }
 
         private void Refresh()
