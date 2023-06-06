@@ -77,11 +77,43 @@ namespace Anatawa12.VrcGetResolver
         private const FileAccessPermissions Executable =
             FileAccessPermissions.OtherExecute | FileAccessPermissions.GroupExecute | FileAccessPermissions.UserExecute;
 
-        public static async Task Resolve()
+        public static async Task CallCommand(string arguments)
         {
-            var process = Process.Start(LocalVrcGetPath, $"resolve --project .");
+            var process = Process.Start(LocalVrcGetPath, arguments);
             if (process == null) throw new Exception("cannot start vrc-get");
             await Task.Run(() => process.WaitForExit());
+        }
+
+        private static async Task<T> CallJsonCommand<T>(string arguments)
+        {
+            var startInfo = new ProcessStartInfo(LocalVrcGetPath, arguments);
+            startInfo.RedirectStandardOutput = true;
+            startInfo.UseShellExecute = false;
+            var process = Process.Start(startInfo);
+            if (process == null) throw new Exception("cannot start vrc-get");
+            await Task.Run(() => process.WaitForExit());
+            var json = await process.StandardOutput.ReadToEndAsync();
+            return JsonUtility.FromJson<T>(json);
+        }
+
+        public static async Task Resolve() => await CallCommand("resolve --project .");
+        public static async Task Update() => await CallCommand("update");
+
+        public static async Task<InfoProject> GetProjectInfo() => 
+            await CallJsonCommand<InfoProject>("info project --json-format 1 --project .");
+
+        [Serializable]
+        public sealed class InfoProject
+        {
+            public List<PackageInfo> packages;
+
+            [Serializable]
+            public sealed class PackageInfo
+            {
+                [NotNull] public string name;
+                [CanBeNull] public string installed;
+                [CanBeNull] public string locked;
+            }
         }
     }
 }
