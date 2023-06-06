@@ -48,12 +48,15 @@ namespace Anatawa12.VrcGetResolver
         private Task<VrcGet.InfoProject> _projectTask;
         private Dictionary<string, PackageInfo> _packages;
 
+        private void OnEnable()
+        {
+            if (_projectTask == null)
+                Refresh();
+        }
+
         private void OnGUI()
         {
             if (GUILayout.Button("Refresh"))
-                Refresh();
-
-            if (_projectTask == null)
                 Refresh();
 
             Debug.Assert(_projectTask != null, nameof(_projectTask) + " != null");
