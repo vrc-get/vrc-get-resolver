@@ -72,28 +72,28 @@ namespace Anatawa12.VrcGetResolver
                     GUILayout.BeginHorizontal();
                     GUILayout.Label($"{package.name} {package.locked}", Styles.WordWrapLabel);
                     if (string.IsNullOrEmpty(package.installed))
-                        GUILayout.Label("MISSING!", Styles.RedLabelLabel, GUILayout.Width(50));
+                        GUILayout.Label("MISSING!", Styles.RedLabelLabel, GUILayout.Width(60));
                     else
-                        GUILayout.Label(package.installed, EditorStyles.label, GUILayout.Width(50));
+                        GUILayout.Label(package.installed, EditorStyles.label, GUILayout.Width(60));
 
                     var infoTask = _packages[package.name];
                     if (!infoTask.IsCompleted)
                     {
-                        EditorGUILayout.Popup(0, Styles.LoadingContentList, GUILayout.Width(50));
+                        EditorGUILayout.Popup(0, Styles.LoadingContentList, GUILayout.Width(60));
                     }
                     else if (infoTask.Exception != null || infoTask.Result == null)
                     {
-                        EditorGUILayout.Popup(0, Styles.LoadingErrorContentList, Styles.RedLabelLabel, GUILayout.Width(50));
+                        EditorGUILayout.Popup(0, Styles.LoadingErrorContentList, Styles.RedLabelLabel, GUILayout.Width(60));
                     }
                     else if (infoTask.Result.versions.Count == 0)
                     {
-                        EditorGUILayout.Popup(0, Styles.MissingContentList, Styles.RedLabelLabel, GUILayout.Width(50));
+                        EditorGUILayout.Popup(0, Styles.MissingContentList, Styles.RedLabelLabel, GUILayout.Width(60));
                     }
                     else
                     {
-                        EditorGUILayout.Popup(0, infoTask.Result.versions.Select(x => x.version).ToArray(), GUILayout.Width(50));
+                        EditorGUILayout.Popup(0, infoTask.Result.versions.Select(x => x.version).ToArray(), GUILayout.Width(60));
                     }
-                    GUILayout.Button("Button", Styles.UpdateButton, GUILayout.Width(50));
+                    GUILayout.Button("Button", Styles.UpdateButton, GUILayout.Width(60));
                     GUILayout.EndHorizontal();
                 }
             }
