@@ -102,6 +102,9 @@ namespace Anatawa12.VrcGetResolver
         public static async Task<InfoProject> GetProjectInfo() => 
             await CallJsonCommand<InfoProject>("info project --json-format 1 --project .");
 
+        public static async Task<InfoPackage> GetPackageInfo(string package) => 
+            await CallJsonCommand<InfoPackage>($"info package \"{package}\" --json-format 1 --offline");
+
         [Serializable]
         public sealed class InfoProject
         {
@@ -113,6 +116,18 @@ namespace Anatawa12.VrcGetResolver
                 [NotNull] public string name;
                 [CanBeNull] public string installed;
                 [CanBeNull] public string locked;
+            }
+        }
+        
+        [Serializable]
+        public sealed class InfoPackage
+        {
+            public List<VersionInfo> versions;
+
+            [Serializable]
+            public sealed class VersionInfo
+            {
+                [NotNull] public string version;
             }
         }
     }

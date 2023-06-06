@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using UnityEditor;
 using UnityEngine;
@@ -39,9 +41,13 @@ namespace Anatawa12.VrcGetResolver
                 normal = { textColor = Color.green },
                 hover = { textColor = Color.green },
             };
+
+            public static readonly GUIContent[] LoadingContentList = { new GUIContent("Loading...") };
+            public static readonly GUIContent[] LoadingErrorContentList = { new GUIContent("Error") };
         }
 
         private Task<VrcGet.InfoProject> _projectTask;
+        private Dictionary<string, Task<VrcGet.InfoPackage>> _packages;
 
         private void OnGUI()
         {
@@ -49,9 +55,8 @@ namespace Anatawa12.VrcGetResolver
                 Refresh();
 
             if (_projectTask == null)
-            {
                 Refresh();
-            }
+
             Debug.Assert(_projectTask != null, nameof(_projectTask) + " != null");
 
             if (_projectTask.IsFaulted)
@@ -62,7 +67,7 @@ namespace Anatawa12.VrcGetResolver
             {
                 foreach (var package in _projectTask.Result.packages)
                 {
-                    if (package.locked == null) continue;
+                    if (string.IsNullOrEmpty(package.locked)) continue;
                     GUILayout.BeginHorizontal();
                     GUILayout.Label($"{package.name} {package.locked}", Styles.WordWrapLabel);
                     if (string.IsNullOrEmpty(package.installed))
@@ -70,7 +75,19 @@ namespace Anatawa12.VrcGetResolver
                     else
                         GUILayout.Label(package.installed, EditorStyles.label, GUILayout.Width(50));
 
-                    EditorGUILayout.Popup(0, new[] { "<TODO>" }, GUILayout.Width(50));
+                    var infoTask = _packages[package.name];
+                    if (!infoTask.IsCompleted)
+                    {
+                        EditorGUILayout.Popup(0, Styles.LoadingContentList, GUILayout.Width(50));
+                    }
+                    else if (infoTask.Exception != null || infoTask.Result == null)
+                    {
+                        EditorGUILayout.Popup(0, Styles.LoadingErrorContentList, Styles.RedLabelLabel, GUILayout.Width(50));
+                    }
+                    else
+                    {
+                        EditorGUILayout.Popup(0, infoTask.Result.versions.Select(x => x.version).ToArray(), GUILayout.Width(50));
+                    }
                     GUILayout.Button("Button", Styles.UpdateButton, GUILayout.Width(50));
                     GUILayout.EndHorizontal();
                 }
@@ -83,17 +100,32 @@ namespace Anatawa12.VrcGetResolver
 
         private void Refresh()
         {
-            _projectTask = Task.Run(VrcGet.GetProjectInfo);
+            _projectTask = Task.Run(async () =>
+            {
+                await VrcGet.Update();
+                return await VrcGet.GetProjectInfo();
+            });
             _projectTask.ContinueWith(x =>
             {
                 if (x.Exception is AggregateException e)
                 {
                     UnityEngine.Debug.LogException(e.InnerException);
-                    return;
                 }
                 else
                 {
-                    // TODO download package versions
+                    _packages = new Dictionary<string, Task<VrcGet.InfoPackage>>();
+                    foreach (var package in x.Result.packages.Where(package => package.locked != null))
+                    {
+                        var task = Task.Run(() => VrcGet.GetPackageInfo(package.name));
+                        task.ContinueWith(_ =>
+                        {
+                            if (x.Exception is AggregateException ex)
+                                UnityEngine.Debug.LogException(ex.InnerException);
+                            EditorApplication.delayCall += Repaint;
+                        });
+                        _packages.Add(package.name, task);
+                    }
+                    EditorApplication.delayCall += Repaint;
                 }
             });
         }
