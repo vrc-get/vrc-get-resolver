@@ -79,7 +79,8 @@ namespace Anatawa12.VrcGetResolver
                 case 1:
                     break;
                 case 2:
-                    throw new NotImplementedException();
+                    ResolverWindow.Open();
+                    break;
             }
         }
 

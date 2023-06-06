@@ -18,14 +18,8 @@ namespace Anatawa12.VrcGetResolver
         }
 
         [MenuItem("Tools/vrc-get resolver")]
-        private static void Open() => GetWindow<ResolverWindow>("vrc-get resolver window");
+        public static void Open() => GetWindow<ResolverWindow>("vrc-get resolver window");
 
-        private static (string, string)[] _values = new[]
-        {
-            ("com.anatawa12.custom-localization-for-editor-extension", "1.0.0"),
-            ("com.anatawa12.avatar-optimizer", "1.0.0"),
-        };
-        
         private static class Styles
         {
             internal static readonly GUIStyle WordWrapLabel = new GUIStyle(EditorStyles.label)
