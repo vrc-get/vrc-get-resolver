@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Mono.Unix;
 using UnityEngine;
+using Debug = UnityEngine.Debug;
 
 namespace Anatawa12.VrcGetResolver
 {
@@ -50,7 +51,7 @@ namespace Anatawa12.VrcGetResolver
 
         public static bool IsInstalled() => 
             LocalVrcGetPath != null && File.Exists(LocalVrcGetPath) &&
-            GetVersion() != null && new Version(1, 0, 2) < new Version(GetVersion());
+            GetVersion() != null && new Version(1, 0, 2) <= new Version(GetVersion());
 
         public static async Task InstallIfNeeded()
         {
@@ -114,12 +115,13 @@ namespace Anatawa12.VrcGetResolver
                 var process = Process.Start(startInfo);
                 if (process == null) throw new Exception("cannot start vrc-get");
                 process.WaitForExit();
-                var result = process.StandardOutput.ReadToEnd();
+                var result = process.StandardOutput.ReadToEnd().Trim();
                 if (!result.StartsWith("vrc-get ", StringComparison.Ordinal)) return null;
-                return _versionCache = result.Split(new[] { ' ' }, 3)[2];
+                return _versionCache = result.Split(new[] { ' ' }, 3)[1];
             }
-            catch
+            catch (Exception e)
             {
+                Debug.LogException(e);
                 _versionCache = "ERROR";
                 return null;
             }
