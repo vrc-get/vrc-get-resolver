@@ -48,12 +48,15 @@ namespace Anatawa12.VrcGetResolver
             return null;
         }
 
-        public static bool IsInstalled() => LocalVrcGetPath != null && File.Exists(LocalVrcGetPath);
+        public static bool IsInstalled() => 
+            LocalVrcGetPath != null && File.Exists(LocalVrcGetPath) &&
+            GetVersion() != null && new Version(1, 0, 2) < new Version(GetVersion());
 
         public static async Task InstallIfNeeded()
         {
             if (!IsSupported) throw new Exception("VrcGet is not supported for this platform");
             if (IsInstalled()) return;
+            _versionCache = null; // reset
             Directory.CreateDirectory(VrcGetInstallFolder);
             using (var httpClient = new HttpClient())
             {
@@ -94,6 +97,32 @@ namespace Anatawa12.VrcGetResolver
             await Task.Run(() => process.WaitForExit());
             var json = await process.StandardOutput.ReadToEndAsync();
             return JsonUtility.FromJson<T>(json);
+        }
+
+        private static string _versionCache;
+
+        [CanBeNull]
+        public static string GetVersion()
+        {
+            if (_versionCache == "ERROR") return null;
+            if (_versionCache != null) return _versionCache;
+            try
+            {
+                var startInfo = new ProcessStartInfo(LocalVrcGetPath, "--version");
+                startInfo.RedirectStandardOutput = true;
+                startInfo.UseShellExecute = false;
+                var process = Process.Start(startInfo);
+                if (process == null) throw new Exception("cannot start vrc-get");
+                process.WaitForExit();
+                var result = process.StandardOutput.ReadToEnd();
+                if (!result.StartsWith("vrc-get ", StringComparison.Ordinal)) return null;
+                return _versionCache = result.Split(new[] { ' ' }, 3)[2];
+            }
+            catch
+            {
+                _versionCache = "ERROR";
+                return null;
+            }
         }
 
         public static async Task Resolve() => await CallCommand("resolve --project .");
