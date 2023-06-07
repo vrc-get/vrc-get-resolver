@@ -269,7 +269,7 @@ namespace Anatawa12.VrcGetResolver
                 var versions = _task.Result.versions.Select(x => x.version);
                 if (!includePrerelease) versions = versions.Where(x => !x.Contains("-"));
                 var array = versions.ToArray();
-                Array.Sort(array, (a, b) => SortVersion(b, a));
+                Array.Sort(array, (a, b) => new Version(b).CompareTo(new Version(a)));
                 VersionsLabels = array.Select(x => new GUIContent(x)).ToArray();
                 if (Index == -1)
                     Index = Array.IndexOf(array, _lockedVersion);
@@ -286,7 +286,7 @@ namespace Anatawa12.VrcGetResolver
                 {
                     var version = VersionsLabels[Index].text;
 
-                    var cmp = SortVersion(version, _lockedVersion);
+                    var cmp = new Version(version).CompareTo(new Version(_lockedVersion));
                     if (cmp == 0)
                         Status = InfoStatus.SelectingSame;
                     else if (cmp < 0)
@@ -304,30 +304,6 @@ namespace Anatawa12.VrcGetResolver
                 SelectingSame,
                 SelectingUpgrade,
                 SelectingDowngrade,
-            }
-
-            private static int SortVersion(string a, string b)
-            {
-                (int maj, int min, int pat, string pre) ParseVersion(string v)
-                {
-                    var hyphen = v.Split(new[] {'-'}, 2);
-                    var prerelease = v.Length == 1 ? null : v.Split(new[] {'+'}, 2)[0];
-                    var version = hyphen[0].Split('.');
-                    return (int.Parse(version[0]), int.Parse(version[1]), int.Parse(version[2]), prerelease);
-                }
-                int comp;
-                var aParsed = ParseVersion(a);
-                var bParsed = ParseVersion(b);
-
-                comp = aParsed.maj.CompareTo(bParsed.maj);
-                if (comp != 0) return comp;
-                comp = aParsed.min.CompareTo(bParsed.min);
-                if (comp != 0) return comp;
-                comp = aParsed.pat.CompareTo(bParsed.pat);
-                if (comp != 0) return comp;
-                comp = String.Compare(aParsed.pre, bParsed.pre, StringComparison.Ordinal);
-                if (comp != 0) return comp;
-                return 0;
             }
         }
 
