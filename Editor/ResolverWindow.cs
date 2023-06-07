@@ -31,22 +31,10 @@ namespace Anatawa12.VrcGetResolver
                 normal = { textColor = Color.red },
                 hover = { textColor = Color.red },
             };
-
-            internal static readonly GUIStyle UpdateButton = new GUIStyle(GUI.skin.button)
-            {
-                normal = { textColor = Color.green },
-                hover = { textColor = Color.green },
-            };
-            internal static readonly GUIStyle DowngradeButton = new GUIStyle(GUI.skin.button)
-            {
-                normal = { textColor = Color.red },
-                hover = { textColor = Color.red },
-            };
         }
 
         private Vector2 _scroll;
         private Task<VrcGet.InfoProject> _projectTask;
-        private Dictionary<string, PackageInfo> _packages;
 
         private void OnEnable()
         {
@@ -72,22 +60,16 @@ namespace Anatawa12.VrcGetResolver
             else if (_projectTask.IsCompleted)
             {
                 const float installedWidth = 60;
-                const float versionWidth = 60;
-                const float buttonWidth = 60;
 
                 _scroll = GUILayout.BeginScrollView(_scroll);
 
                 GUILayout.BeginHorizontal();
                 var headerPackageRect = GUILayoutUtility.GetRect(GUIContent.none, Styles.WordWrapLabel);
                 var headerInstalledRect = GUILayoutUtility.GetRect(GUIContent.none, EditorStyles.label, GUILayout.Width(installedWidth));
-                var headerButtonRect = GUILayoutUtility.GetRect(GUIContent.none, Styles.UpdateButton, GUILayout.Width(buttonWidth));
-                var headerVersionPopupRect = GUILayoutUtility.GetRect(GUIContent.none, EditorStyles.popup, GUILayout.Width(versionWidth));
                 GUILayout.EndHorizontal();
 
                 headerPackageRect.y += _scroll.y;
-                headerInstalledRect.y += _scroll.y; 
-                headerVersionPopupRect.y += _scroll.y;
-                headerButtonRect.y += _scroll.y;
+                headerInstalledRect.y += _scroll.y;
 
                 foreach (var package in _projectTask.Result.packages)
                 {
@@ -95,63 +77,12 @@ namespace Anatawa12.VrcGetResolver
                     GUILayout.BeginHorizontal();
                     GUILayout.Label($"{package.name} {package.locked}", Styles.WordWrapLabel);
                     var installedRect = GUILayoutUtility.GetRect(GUIContent.none, EditorStyles.label, GUILayout.Width(installedWidth));
-                    var buttonRect = GUILayoutUtility.GetRect(GUIContent.none, Styles.UpdateButton, GUILayout.Width(buttonWidth));
-                    var versionPopupRect = GUILayoutUtility.GetRect(GUIContent.none, EditorStyles.popup, GUILayout.Width(versionWidth));
                     GUILayout.EndHorizontal();
 
                     if (string.IsNullOrEmpty(package.installed))
                         GUI.Label(installedRect, "MISSING!", Styles.RedLabelLabel);
                     else
                         GUI.Label(installedRect, package.installed, EditorStyles.label);
-
-
-                    var info = _packages[package.name];
-                    switch (info.Status)
-                    {
-                        case PackageInfo.InfoStatus.Pending:
-                            GUI.Label(versionPopupRect, "Loading...");
-                            break;
-                        case PackageInfo.InfoStatus.Error:
-                            GUI.Label(versionPopupRect, "Error", Styles.RedLabelLabel);
-                            break;
-                        case PackageInfo.InfoStatus.NotFound:
-                            GUI.Label(versionPopupRect, "Missing", Styles.RedLabelLabel);
-                            break;
-                        case PackageInfo.InfoStatus.SelectingSame:
-                        case PackageInfo.InfoStatus.SelectingUpgrade:
-                        case PackageInfo.InfoStatus.SelectingDowngrade:
-                            info.Init(false);
-                            var index = info.Index == -1 ? 0 : info.Index;
-
-                            EditorGUI.BeginChangeCheck();
-                            index = EditorGUI.Popup(versionPopupRect, index, info.VersionsLabels);
-                            if (EditorGUI.EndChangeCheck())
-                            {
-                                info.Index = index;
-                            }
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
-
-                    EditorGUI.BeginDisabledGroup(true);
-                    switch (info.Status)
-                    {
-                        case PackageInfo.InfoStatus.Pending:
-                        case PackageInfo.InfoStatus.Error:
-                        case PackageInfo.InfoStatus.NotFound:
-                        case PackageInfo.InfoStatus.SelectingSame:
-                            break;
-                        case PackageInfo.InfoStatus.SelectingUpgrade:
-                            GUI.Button(buttonRect, "Upgrade", Styles.UpdateButton);
-                            break;
-                        case PackageInfo.InfoStatus.SelectingDowngrade:
-                            GUI.Button(buttonRect, "Downgrade", Styles.DowngradeButton);
-                            break;
-                        default:
-                            throw new ArgumentOutOfRangeException();
-                    }
-                    EditorGUI.EndDisabledGroup();
                 }
 
                 void ExtendRect(ref Rect toExtend, Rect extend)
@@ -165,8 +96,6 @@ namespace Anatawa12.VrcGetResolver
                 var headerRect = headerPackageRect;
                 ExtendRect(ref headerRect, headerPackageRect);
                 ExtendRect(ref headerRect, headerInstalledRect);
-                ExtendRect(ref headerRect, headerVersionPopupRect);
-                ExtendRect(ref headerRect, headerButtonRect);
                 EditorGUI.DrawRect(headerRect, DefaultBackgroundColor);
 
                 GUI.Label(headerPackageRect, "Package", Styles.WordWrapLabel);
@@ -215,95 +144,28 @@ namespace Anatawa12.VrcGetResolver
         class PackageInfo
         {
             private readonly Task<VrcGet.InfoPackage> _task;
-            private bool? _includePrereleaseOld;
-            public GUIContent[] VersionsLabels;
-            private int _index = -1;
-            private readonly string _lockedVersion;
-            public InfoStatus Status;
 
-            public int Index
-            {
-                get => _index;
-                set
-                {
-                    if (_index != value)
-                    {
-                        _index = value;
-                        ComputeState();
-                    }
-                }
-            }
-
-            public PackageInfo([NotNull] Task<VrcGet.InfoPackage> task, string lockedVersion, Action repaint)
+            public PackageInfo([NotNull] Task<VrcGet.InfoPackage> task, Action repaint)
             {
                 _task = task ?? throw new ArgumentNullException(nameof(task));
-                _lockedVersion = lockedVersion;
-                Status = InfoStatus.Pending;
 
                 task.ContinueWith(x =>
                 {
                     if (x.Exception is AggregateException ex)
                     {
                         UnityEngine.Debug.LogException(ex.InnerException);
-                        Status = InfoStatus.Error;
                     }
                     else
                     {
                         if (x.Result == null || x.Result.versions.Count == 0)
                         {
-                            Status = InfoStatus.NotFound;
                         }
                         else
                         {
-                            Init(false);
                             EditorApplication.delayCall += repaint.Invoke;
                         }
                     }
                 });
-            }
-
-            public void Init(bool includePrerelease)
-            {
-                if (_includePrereleaseOld == includePrerelease) return;
-                _includePrereleaseOld = includePrerelease;
-                var versions = _task.Result.versions.Select(x => x.version);
-                if (!includePrerelease) versions = versions.Where(x => !x.Contains("-"));
-                var array = versions.ToArray();
-                Array.Sort(array, (a, b) => new Version(b).CompareTo(new Version(a)));
-                VersionsLabels = array.Select(x => new GUIContent(x)).ToArray();
-                if (Index == -1)
-                    Index = Array.IndexOf(array, _lockedVersion);
-                ComputeState();
-            }
-
-            private void ComputeState()
-            {
-                if (Index == -1)
-                {
-                    Status = InfoStatus.SelectingSame;
-                }
-                else
-                {
-                    var version = VersionsLabels[Index].text;
-
-                    var cmp = new Version(version).CompareTo(new Version(_lockedVersion));
-                    if (cmp == 0)
-                        Status = InfoStatus.SelectingSame;
-                    else if (cmp < 0)
-                        Status = InfoStatus.SelectingDowngrade;
-                    else
-                        Status = InfoStatus.SelectingUpgrade;
-                }
-            }
-
-            public enum InfoStatus
-            {
-                Pending,
-                Error,
-                NotFound,
-                SelectingSame,
-                SelectingUpgrade,
-                SelectingDowngrade,
             }
         }
 
@@ -343,12 +205,6 @@ namespace Anatawa12.VrcGetResolver
                 }
                 else
                 {
-                    _packages = new Dictionary<string, PackageInfo>();
-                    foreach (var package in x.Result.packages.Where(package => package.locked != null))
-                    {
-                        var task = Task.Run(() => VrcGet.GetPackageInfo(package.name));
-                        _packages.Add(package.name, new PackageInfo(task, package.locked, Repaint));
-                    }
                     EditorApplication.delayCall += Repaint;
                 }
             });
