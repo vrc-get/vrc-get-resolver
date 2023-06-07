@@ -8,18 +8,9 @@ A Open Source Alternative of VPM Resolver based on [vrc-get], a open source vpm 
 Installation
 ---
 
-**Those implementation may not yet implemented**
-
 ### Using git UPM
 You can install this package using git upm.
-Please add `https://github.com/anatawa12/vrc-get-resolver.git#<version>` to your project.
-
-### Using vpm
-You also can install this package using vpm.
-Please add [vpm.anatawa12.com] to your VCC/VPM Client & add `vrc-get resolver` to your project, 
-and don't forget to add `com.anatawa12.vrc-get-resolver` as a gitignore exceptions to `Package/.gitignore`.
-
-[vpm.anatawa12.com]: https://vpm.anatawa12.com/
+Please add `https://github.com/anatawa12/vrc-get-resolver.git` to your project.
 
 FAQs
 ---
