@@ -51,7 +51,7 @@ namespace Anatawa12.VrcGetResolver
 
         public static bool IsInstalled() => 
             LocalVrcGetPath != null && File.Exists(LocalVrcGetPath) &&
-            GetVersion() != null && new Version(1, 0, 2) <= new Version(GetVersion());
+            GetVersion() != null && new Version(1, 1, 0) <= new Version(GetVersion());
 
         public static async Task InstallIfNeeded()
         {
