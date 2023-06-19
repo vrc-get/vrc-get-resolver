@@ -73,9 +73,15 @@ namespace Anatawa12.VrcGetResolver
 
                 foreach (var package in _projectTask.Result.packages)
                 {
-                    if (string.IsNullOrEmpty(package.locked)) continue;
+                    string requested;
+                    if (!string.IsNullOrEmpty(package.locked))
+                        requested = package.locked;
+                    else if (package.requested != null && package.requested.Length >= 1)
+                        requested = package.requested[0];
+                    else
+                        requested = "(unlocked)";
                     GUILayout.BeginHorizontal();
-                    GUILayout.Label($"{package.name} {package.locked}", Styles.WordWrapLabel);
+                    GUILayout.Label($"{package.name} {requested}", Styles.WordWrapLabel);
                     var installedRect = GUILayoutUtility.GetRect(GUIContent.none, EditorStyles.label, GUILayout.Width(installedWidth));
                     GUILayout.EndHorizontal();
 
@@ -185,7 +191,7 @@ namespace Anatawa12.VrcGetResolver
                         "vrc-get is not yet installed!", 
                         "Install", "Close the vrc-get resolver"))
                 {
-                    Close();
+                    DestroyImmediate(this);
                     return;
                 }
 
