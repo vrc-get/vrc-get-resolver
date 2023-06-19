@@ -191,7 +191,7 @@ namespace Anatawa12.VrcGetResolver
                         "vrc-get is not yet installed!", 
                         "Install", "Close the vrc-get resolver"))
                 {
-                    Close();
+                    DestroyImmediate(this);
                     return;
                 }
 
