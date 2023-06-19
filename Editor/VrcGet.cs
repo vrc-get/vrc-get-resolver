@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Threading.Tasks;
 using JetBrains.Annotations;
 using Mono.Unix;
@@ -53,11 +54,25 @@ namespace Anatawa12.VrcGetResolver
             LocalVrcGetPath != null && File.Exists(LocalVrcGetPath) &&
             GetVersion() != null && new Version(1, 1, 0) <= new Version(GetVersion());
 
+        private static readonly SemaphoreSlim InstallSemaphore = new SemaphoreSlim(1);
+
         public static async Task InstallIfNeeded()
+        {
+            await InstallSemaphore.WaitAsync();
+            try
+            {
+                await InstallIfNeededImpl();
+            }
+            finally
+            {
+                InstallSemaphore.Release();
+            }
+        }
+
+        private static async Task InstallIfNeededImpl()
         {
             if (!IsSupported) throw new Exception("VrcGet is not supported for this platform");
             if (IsInstalled()) return;
-            _versionCache = null; // reset
             Directory.CreateDirectory(VrcGetInstallFolder);
             using (var httpClient = new HttpClient())
             {
@@ -76,6 +91,9 @@ namespace Anatawa12.VrcGetResolver
                 // unix system. set executable
                 new UnixFileInfo(LocalVrcGetPath).FileAccessPermissions |= Executable;
             }
+
+            // now executable so reset
+            _versionCache = null; // reset
         }
 
         private const FileAccessPermissions Executable =
@@ -100,7 +118,7 @@ namespace Anatawa12.VrcGetResolver
             return JsonUtility.FromJson<T>(json);
         }
 
-        private static string _versionCache;
+        private static volatile string _versionCache;
 
         [CanBeNull]
         public static string GetVersion()
