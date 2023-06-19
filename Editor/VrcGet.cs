@@ -147,6 +147,7 @@ namespace Anatawa12.VrcGetResolver
                 [NotNull] public string name;
                 [CanBeNull] public string installed;
                 [CanBeNull] public string locked;
+                [CanBeNull] public string[] requested;
             }
         }
         
