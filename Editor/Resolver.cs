@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using Anatawa12.SimpleJson;
@@ -22,6 +23,18 @@ namespace Anatawa12.VrcGetResolver
             if (SessionState.GetBool("com.anatawa12.vrc-get-resolver.resolved", false))
                 return false;
             SessionState.SetBool("com.anatawa12.vrc-get-resolver.resolved", true);
+
+            var packages = GetRequiredPackagesFromVpmManifest().ToArray();
+
+            // there are some path traversal dangerous path
+            if (packages.Any(x => x.Contains('/') || x.Contains('\\') || x == ".."))
+                return false;
+
+            return packages.Any(package => !File.Exists($"Packages/{package}/package.json"));
+        }
+
+        private static IEnumerable<string> GetRequiredPackagesFromVpmManifest()
+        {
             string vpmManifestJson;
             try
             {
@@ -29,27 +42,20 @@ namespace Anatawa12.VrcGetResolver
             }
             catch (IOException e) when (e is FileNotFoundException || e is DirectoryNotFoundException)
             {
-                return false;
+                return Array.Empty<string>();
             }
 
-            string[] packages;
             try
             {
                 var vpmManifest = new JsonParser(vpmManifestJson).Parse(JsonType.Obj);
                 var locked = vpmManifest.Get("locked", JsonType.Obj, true);
-                packages = locked.Keys.ToArray();
+                return locked.Keys;
             }
             catch (SystemException e) when (e is InvalidOperationException || e is NullReferenceException)
             {
                 // invalid vpm manifest
-                return false;
+                return Array.Empty<string>();
             }
-
-            // there are some path traversal dangerous path
-            if (packages.Any(x => x.Contains('/') || x.Contains('\\') || x == ".."))
-                return false;
-
-            return packages.Any(package => !File.Exists($"Packages/{package}/package.json"));
         }
 
         private static void AskAndResolve()
