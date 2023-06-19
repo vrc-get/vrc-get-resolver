@@ -79,7 +79,7 @@ namespace Anatawa12.VrcGetResolver
                     else if (package.requested != null && package.requested.Length >= 1)
                         requested = package.requested[0];
                     else
-                        continue;
+                        requested = "(unlocked)";
                     GUILayout.BeginHorizontal();
                     GUILayout.Label($"{package.name} {requested}", Styles.WordWrapLabel);
                     var installedRect = GUILayoutUtility.GetRect(GUIContent.none, EditorStyles.label, GUILayout.Width(installedWidth));
