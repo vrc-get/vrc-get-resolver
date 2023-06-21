@@ -38,35 +38,19 @@ namespace Anatawa12.VrcGetResolver
 
         private static IEnumerable<string> GetRequiredPackagesFromPackageJson()
         {
-            string upmLockJson;
-            try
-            {
-                upmLockJson = File.ReadAllText(UpmLockJsonPath);
-            }
-            catch (IOException e) when (e is FileNotFoundException || e is DirectoryNotFoundException)
-            {
-                // no lock json
-                return Array.Empty<string>();
-            }
-
             string[] packages;
             try
             {
-                var upmLock = new JsonParser(upmLockJson).Parse(JsonType.Obj);
-                var dependencies = upmLock.Get("dependencies", JsonType.Obj, true);
-                packages = dependencies.Keys.ToArray();
+                packages = Directory.GetDirectories("Packages");
             }
-            catch (SystemException e) when (e is InvalidOperationException || e is NullReferenceException)
+            catch (DirectoryNotFoundException)
             {
-                // invalid upm lock file
+                // no Packages folder. this is invalid 
                 return Array.Empty<string>();
             }
 
             IEnumerable<string> GetVpmDependenciesOfPackage(string package)
             {
-                if (!IsSafePackageName(package))
-                    return Array.Empty<string>();
-
                 string packageJson;
                 try
                 {
