@@ -17,9 +17,10 @@ namespace Anatawa12.VrcGetResolver
     {
         private static readonly string ExecutableName = GetVrcGetExecutableName();
 
+        private static readonly string VrcGetInstallFolder =
+            "Library" + Path.DirectorySeparatorChar + "com.anatawa12.vrc-get-resolver";
         private static readonly string LocalVrcGetPath =
-            ExecutableName == null ? null : VrcGetInstallFolder + "/" + ExecutableName;
-        private const string VrcGetInstallFolder = "Library/com.anatawa12.vrc-get-resolver";
+            ExecutableName == null ? null : VrcGetInstallFolder + Path.DirectorySeparatorChar + ExecutableName;
 
         public static bool IsSupported => ExecutableName != null;
 
